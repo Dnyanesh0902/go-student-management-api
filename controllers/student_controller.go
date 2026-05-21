@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"student-management-api/database"
 	"student-management-api/models"
+	"student-management-api/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,8 +16,10 @@ func CreateStudent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error" : err.Error()})
 		return
 	}
-
-	database.DB.Create(&student)
+	if err := services.CreateStudent(&student); err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"message":"Failed to create student"})
+		return
+	}
 	c.JSON(http.StatusCreated, gin.H{
 		"Message":"Student Created Successfully",
 		"data": student,
@@ -25,19 +27,21 @@ func CreateStudent(c *gin.Context) {
 }
 
 func GetStudents(c *gin.Context) {
-	var student []models.Student
-
-	database.DB.Find(&student)
+	students , err := services.GetStudents()
+	if err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"message":"Failed to fetch students"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"data": student,
+		"data": students,
 	})
 }
 
 func GetStudentByID(c *gin.Context) {
 	id := c.Param("id")
-	var student models.Student
+	student, err := services.GetStudentByID(id)
 
-	if err := database.DB.First(&student, id).Error; err != nil {
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "Student Not Found"})
 		return
 	}
@@ -48,9 +52,9 @@ func GetStudentByID(c *gin.Context) {
 
 func UpdateStudent(c *gin.Context) {
 	id := c.Param("id")
-	var student models.Student
+	student, err := services.GetStudentByID(id)
 
-	if err := database.DB.First(&student, id).Error; err != nil {
+	if  err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"Message":"Student Not Found"})
 		return
 	}
@@ -69,7 +73,9 @@ func UpdateStudent(c *gin.Context) {
 	student.Course = input.Course
 	student.City = input.City
 
-	database.DB.Save(&student)
+	if err := services.UpdateStudent(&student); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message":"Failed to update student"})
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":"Student Updated Successfully",
@@ -80,24 +86,26 @@ func UpdateStudent(c *gin.Context) {
 func DeleteStudent(c *gin.Context) {
 	id := c.Param("id")
 	
-	studentID, err := strconv.Atoi(id)
+	_, err := strconv.Atoi(id)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message":"Invalid Student Id",
 		})
 		return
 	}
+	student, err := services.GetStudentByID(id)
 
-	var student models.Student
-
-	if err := database.DB.First(&student, studentID).Error; err != nil {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message":"Student Not Found",
 		})
 		return
 	}
-	database.DB.Delete(&student)
-
+	if err := services.DeleteStudent(&student); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message":"Failed to delete Student"})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "student deleted successfully",
 	})
