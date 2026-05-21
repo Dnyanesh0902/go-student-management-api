@@ -8,13 +8,14 @@ import (
 	"student-management-api/dto"
 	"student-management-api/models"
 	"student-management-api/services"
+	"student-management-api/utils"
 )
 
 func CreateStudent(c *gin.Context) {
 	var input dto.CreateStudentRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": utils.GetValidationErrors(err)})
 		return
 	}
 	student := models.Student{
@@ -70,7 +71,7 @@ func UpdateStudent(c *gin.Context) {
 	var input dto.CreateStudentRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": utils.GetValidationErrors(err)})
 		return
 	}
 
