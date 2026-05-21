@@ -24,7 +24,7 @@ func CreateStudent(c *gin.Context) {
 	})
 }
 
-func GetStudent(c *gin.Context) {
+func GetStudents(c *gin.Context) {
 	var student []models.Student
 
 	database.DB.Find(&student)
@@ -33,7 +33,7 @@ func GetStudent(c *gin.Context) {
 	})
 }
 
-func GetStudentById(c *gin.Context) {
+func GetStudentByID(c *gin.Context) {
 	id := c.Param("id")
 	var student models.Student
 

@@ -2,110 +2,80 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
+
 	"student-management-api/database"
 	"student-management-api/models"
+	"student-management-api/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
-func CreateUser(c *gin.Context) {
+func Register(c *gin.Context) {
 	var user models.User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	hashedPassword, err := utils.HashPassword(user.Password)
 
-	database.DB.Create(&user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message":"Failed to hash password",
+		})
+		return
+	}
+	user.Password = hashedPassword
+
+	if err := database.DB.Create(&user).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message":"Email already exists or invalid data",
+		})
+		return
+	}
+	
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "User created successfully",
-		"data":    user,
+		"message": "User registered successfully",
+		"data":    gin.H{
+			"id": user.ID,
+			"name":user.Name,
+			"email": user.Email,
+			"role": user.Role,
+		},
 	})
 }
-
-func GetUsers(c *gin.Context) {
-	var users []models.User
-
-	database.DB.Find(&users)
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": users,
-	})
-}
-
-func GetUserByID(c *gin.Context) {
-	id := c.Param("id")
-
-	var user models.User
-
-	if err := database.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "User not found",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"data": user,
-	})
-}
-
-func UpdateUser(c *gin.Context) {
-	id := c.Param("id")
-
-	var user models.User
-
-	if err := database.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "User not found",
-		})
-		return
-	}
-
+func Login(c *gin.Context){
 	var input models.User
+	var user models.User
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user.Name = input.Name
-	user.Email = input.Email
-	user.Password = input.Password
-	user.Role = input.Role
-
-	database.DB.Save(&user)
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User updated successfully",
-		"data":    user,
-	})
-}
-
-func DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-
-	userID, err := strconv.Atoi(id)
+	if err := database.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message":"Invalid email or password",
+		})
+		return
+	}
+	if !utils.CheckPassword(input.Password, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message":"Invalid email or password",
+		})
+		return
+	}
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.Role)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid User ID",
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message":"Failed to generate token",
 		})
 		return
 	}
-
-	var user models.User
-
-	if err := database.DB.First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "User not found",
-		})
-		return
-	}
-	database.DB.Delete(&user)
-
 	c.JSON(http.StatusOK, gin.H{
-		"message": "User deleted successfully",
+		"message":"login successful",
+		"token": token,
 	})
 }
