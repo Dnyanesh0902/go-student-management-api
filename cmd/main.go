@@ -5,6 +5,7 @@ import (
 
 	"student-management-api/database"
 	"student-management-api/routes"
+	"student-management-api/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -23,7 +24,7 @@ func main() {
 
 	// Create Router
 	router := gin.Default()
-
+	router.Use(middleware.LoggerMiddleware())
 	// Setup Routes
 	routes.SetupRoutes(router)
 
