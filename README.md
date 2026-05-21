@@ -268,7 +268,94 @@ docker run --platform linux/amd64 \
 
 # ▶️ Run Project
 
-## Install Dependencies
+# 📦 Installed Libraries
+
+## Gin Framework
+
+```bash
+go get github.com/gin-gonic/gin
+```
+
+Used for:
+- REST API
+- Routing
+- Middleware
+- JSON Handling
+
+---
+
+## GORM ORM
+
+```bash
+go get gorm.io/gorm
+```
+
+Used for:
+- Database Operations
+- ORM Functionality
+- CRUD Queries
+
+---
+
+## SQL Server Driver
+
+```bash
+go get gorm.io/driver/sqlserver
+```
+
+Used for:
+- SQL Server Database Connection
+
+---
+
+## JWT Authentication
+
+```bash
+go get github.com/golang-jwt/jwt/v5
+```
+
+Used for:
+- JWT Token Generation
+- Authentication
+- Authorization
+
+---
+
+## Password Hashing (bcrypt)
+
+```bash
+go get golang.org/x/crypto/bcrypt
+```
+
+Used for:
+- Secure Password Hashing
+
+---
+
+## Environment Variables
+
+```bash
+go get github.com/joho/godotenv
+```
+
+Used for:
+- Loading `.env` Configuration Files
+
+---
+
+## Validation Library
+
+```bash
+go get github.com/go-playground/validator/v10
+```
+
+Used for:
+- Request Validation
+- DTO Validation
+
+---
+
+# 📌 Install All Dependencies
 
 ```bash
 go mod tidy
